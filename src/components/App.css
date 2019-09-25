@@ -1,0 +1,13 @@
+html,
+body,
+.app {
+  height: 100vh;
+  background: #eee;
+  padding: 1em;
+}
+.font-open{
+    font-family: 'Open Sans Condensed', sans-serif !important;
+}
+.font-rale{
+     font-family: "Raleway", sans-serif !important;
+}
