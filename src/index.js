@@ -11,6 +11,7 @@ import { createStore } from 'redux';
 import { Provider,connect } from 'react-redux';
 import { composeWithDevTools } from 'redux-devtools-extension';
 import rootReducer from './reducers';
+import Spinner from './Spinner'
 
 import {setUser} from './actions/index';
 const store = createStore(rootReducer, composeWithDevTools());
@@ -38,10 +39,10 @@ class Root extends React.Component {
 
 }
 const mapStateToProps = state =>({
-    isLoading:this.state.user.isLoading,
+    isLoading:state.user.isLoading,
 
 })
-const RootWithRouter = withRouter(connect(null,{setUser})(Root));
+const RootWithRouter = withRouter(connect(mapStateToProps,{setUser})(Root));
 
 ReactDOM.render(<Provider store={store}>
     <Router>
