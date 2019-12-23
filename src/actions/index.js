@@ -31,3 +31,12 @@ export const setPrivateChannel = isPrivateChannel =>{
         }
     }
 }
+
+export const setUserPosts = userPosts =>{
+    return{
+        type:actionType.SET_USER_POST,
+        payload:{
+            userPosts
+        }
+    }
+}
