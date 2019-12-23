@@ -25,12 +25,12 @@ export default class MessageForm extends Component {
         this.setState({ [event.target.name]: event.target.value });
     }
     sendReply = () => {
-        const { messageRef } = this.props;
+        const { getMessagesRef } = this.props;
         const { message, channel } = this.state;
         if (message) {
             //sending message
             this.setState({ loading: true });
-            messageRef
+            getMessagesRef()
                 .child(channel.id)
                 .push()
                 .set(this.createMessage())
@@ -66,10 +66,18 @@ export default class MessageForm extends Component {
         }
         return message;
     }
+    getPath = () =>{
+        if(this.props.isPrivateChannel){
+            return `chat/private-${this.state.channel.id}`;
+        }
+        else{
+            return 'chat/public';
+        }
+    }
     uploadFile = (file, metadata) => {
         const pathToUpload = this.state.channel.id;
-        const ref = this.props.messageRef;
-        const filePath = `chat/public/${uuidv4()}.jpg`;
+        const ref = this.props.getMessagesRef();
+        const filePath = `${this.getPath()}/${uuidv4()}.jpg`;
         this.setState({
             uploadState: 'uploading',
             uploadTask: this.state.storageRef.child(filePath).put(file, metadata)
@@ -134,7 +142,7 @@ export default class MessageForm extends Component {
                     placeholder="Write Your Message" />
                 <Button.Group icon widths="2">
                     <Button onClick={this.sendReply} disabled={loading} color="orange" content="Add Reply" labelPosition="left" icon="edit" />
-                    <Button color="teal" onClick={this.openModal} content="upload media" labelPosition="right" icon="cloud upload" />
+                    <Button color="teal" disabled={uploadState==='uploading'} onClick={this.openModal} content="upload media" labelPosition="right" icon="cloud upload" />
                 </Button.Group>
                 <FileModal
                     modal={modal}
