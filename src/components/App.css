@@ -5,20 +5,20 @@ body,
   background: #eee;
   padding: 1em;
 }
-.font-open{
-    font-family: 'Open Sans Condensed', sans-serif !important;
+.font-open {
+  font-family: "Open Sans Condensed", sans-serif !important;
 }
-.font-rale{
-     font-family: "Raleway", sans-serif !important;
+.font-rale {
+  font-family: "Raleway", sans-serif !important;
 }
 /* messages */
-.messages{
+.messages {
   height: 59vh;
   overflow-y: scroll;
   width: auto;
 }
-.messages__progress{
-  height:58vh;
+.messages__progress {
+  height: 58vh;
   overflow-y: scroll;
 }
 
@@ -27,12 +27,12 @@ body,
   max-width: 64rem !important;
 }
 /* siedpanel */
-.menu{
+.menu {
   padding-bottom: 2em;
 }
 
 /* messages area */
-.message__form{
+.message__form {
   position: fixed !important;
   bottom: 1em;
   margin-left: 320px !important;
@@ -40,16 +40,37 @@ body,
   right: 1em;
   z-index: 200;
 }
-.message__self{
+.message__self {
   border-left: 2px solid orange;
   padding-left: 8px;
 }
-.message__image{
-  padding:1em;
+.message__image {
+  padding: 1em;
 }
 
 /* progressbar */
 
-.progress__bar{
+.progress__bar {
   margin: 0.3rem 0 0 0 !important;
+}
+
+/* colorpanel */
+
+.color__container {
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  width: 35px;
+  border-radius: 3px;
+}
+
+.color__square{
+  width: 35px;
+  height: 35px;
+}
+
+.color__overlay{
+  width: 85px;
+  height: 35px;
+  transform: rotate(225deg);
 }

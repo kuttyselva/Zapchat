@@ -5,3 +5,6 @@ export const CLEAR_USER='CLEAR_USER';
 export const SET_CURRENT_CHANNEL='SET_CURRENT_CHANNEL'
 export const SET_PRIVATE_CHANNEL='SET_PRIVATE_CHANNEL'
 export const SET_USER_POST = 'SET_USER_POST'
+
+// colors types
+export const SET_COLORS = 'SET_COLORS'
