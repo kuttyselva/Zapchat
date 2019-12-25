@@ -10,6 +10,7 @@ class Channels extends Component {
         channelName: '',
         channel: null,
         messagesRef: firebase.database().ref('messages'),
+        typingRef: firebase.database().ref('typing'),
         notifications: [],
         channelDetails: '',
         channelsRef: firebase.database().ref('channels'),
@@ -71,7 +72,7 @@ class Channels extends Component {
             // console.log(firstChannel);
             this.props.setCurrentChannel(firstChannel);
             this.setActiveChannel(firstChannel);
-            this.setState({channel:firstChannel});
+            this.setState({ channel: firstChannel });
         }
         this.setState({ firstChannel: false });
     }
@@ -80,6 +81,7 @@ class Channels extends Component {
     }
     changeChannel = channel => {
         this.setActiveChannel(channel);
+        this.state.typingRef.child(this.state.channel.id).child(this.state.user.uid).remove();
         this.props.setCurrentChannel(channel);
         this.clearNotifications();
         this.props.setPrivateChannel(false);
@@ -134,14 +136,14 @@ class Channels extends Component {
             # {channel.name}
         </Menu.Item>
     )));
-    getNotificationCount = channel =>{
-        let count=0;
-        this.state.notifications.forEach(notification=>{
-            if(notification.id === channel.id){
-                count=notification.count;
+    getNotificationCount = channel => {
+        let count = 0;
+        this.state.notifications.forEach(notification => {
+            if (notification.id === channel.id) {
+                count = notification.count;
             }
         });
-        if(count > 0) return count;
+        if (count > 0) return count;
     }
     isFormValid = ({ channelName, channelDetails }) => channelName && channelDetails;
 

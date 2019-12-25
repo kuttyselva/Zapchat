@@ -12,6 +12,7 @@ export default class MessageForm extends Component {
         loading: false,
         channel: this.props.currentChannel,
         errors: [],
+        typingRef: firebase.database().ref('typing'),
         modal: false,
         uploadState: '',
         uploadTask: null,
@@ -26,7 +27,7 @@ export default class MessageForm extends Component {
     }
     sendReply = () => {
         const { getMessagesRef } = this.props;
-        const { message, channel } = this.state;
+        const { message, channel, typingRef, user } = this.state;
         if (message) {
             //sending message
             this.setState({ loading: true });
@@ -36,6 +37,9 @@ export default class MessageForm extends Component {
                 .set(this.createMessage())
                 .then(() => {
                     this.setState({ loading: false, message: '', errors: [] });
+                    typingRef.child(channel.id)
+                        .child(user.uid)
+                        .remove();
                 })
                 .catch((err) => {
                     console.log(err);
@@ -66,11 +70,11 @@ export default class MessageForm extends Component {
         }
         return message;
     }
-    getPath = () =>{
-        if(this.props.isPrivateChannel){
+    getPath = () => {
+        if (this.props.isPrivateChannel) {
             return `chat/private-${this.state.channel.id}`;
         }
-        else{
+        else {
             return 'chat/public';
         }
     }
@@ -114,6 +118,19 @@ export default class MessageForm extends Component {
         )
     };
 
+    handleKeyDown = () => {
+        const { message, typingRef, channel, user } = this.state;
+        if (message) {
+            typingRef.child(channel.id)
+                .child(user.uid)
+                .set(user.displayName)
+        } else {
+            typingRef.child(channel.id)
+                .child(user.uid)
+                .remove();
+        }
+    }
+
     sendFileMessage = (fileUrl, ref, path) => {
         ref.child(path)
             .push()
@@ -136,13 +153,14 @@ export default class MessageForm extends Component {
                 }
                     onChange={this.handleChange}
                     value={message}
+                    onKeyDown={this.handleKeyDown}
                     style={{ marginBottom: '0.7em' }}
                     label={<Button icon="add" />}
                     labelPosition="left"
                     placeholder="Write Your Message" />
                 <Button.Group icon widths="2">
                     <Button onClick={this.sendReply} disabled={loading} color="orange" content="Add Reply" labelPosition="left" icon="edit" />
-                    <Button color="teal" disabled={uploadState==='uploading'} onClick={this.openModal} content="upload media" labelPosition="right" icon="cloud upload" />
+                    <Button color="teal" disabled={uploadState === 'uploading'} onClick={this.openModal} content="upload media" labelPosition="right" icon="cloud upload" />
                 </Button.Group>
                 <FileModal
                     modal={modal}
