@@ -16,6 +16,12 @@ class Starred extends Component {
             this.addListeners(this.state.user.uid);
         }
     }
+    componentWillUnmount() {
+        this.removeListener();
+    }
+    removeListener = ()=>{
+        this.state.userRef.child(`${this.state.user.uid}/starred`).off();
+    }
     addListeners = (userId) => {
         this.state.userRef.child(userId).child('starred').on('child_added', snap => {
             const starredChannel = {
@@ -30,7 +36,7 @@ class Starred extends Component {
             const filteredChannel = this.state.starredChannels.filter(channel => {
                 return channel.id !== channelToRemove.id;
             });
-            this.setState({starredChannels:filteredChannel});
+            this.setState({ starredChannels: filteredChannel });
         });
 
 

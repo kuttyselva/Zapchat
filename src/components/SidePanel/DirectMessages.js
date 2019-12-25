@@ -5,7 +5,7 @@ import { connect } from 'react-redux'
 import { setCurrentChannel, setPrivateChannel } from '../../actions/index'
 class DirectMessages extends Component {
     state = {
-        activeChannel:'',
+        activeChannel: '',
         users: [],
         user: this.props.currentUser,
         usersRef: firebase.database().ref('users'),
@@ -14,6 +14,15 @@ class DirectMessages extends Component {
     }
     componentDidMount() {
         this.addListeners(this.state.user.uid);
+    }
+
+    componentWillUnmount() {
+        this.removeListener();
+    }
+    removeListener = () => {
+        this.state.usersRef.off();
+        this.state.presenceRef.off();
+        this.state.connectedRef.off();
     }
     addListeners = currentUserId => {
         let loadedUsers = [];
@@ -79,11 +88,11 @@ class DirectMessages extends Component {
         const currentUserId = this.state.user.uid;
         return userId < currentUserId ? `${userId}/${currentUserId}` : `${currentUserId}/${userId}`;
     }
-setActiveChannel= userId =>{
-    this.setState({activeChannel: userId});
-}
+    setActiveChannel = userId => {
+        this.setState({ activeChannel: userId });
+    }
     render() {
-        const { users,activeChannel } = this.state;
+        const { users, activeChannel } = this.state;
         return (
             <Menu.Menu className="menu">
                 <Menu.Item>
@@ -94,7 +103,7 @@ setActiveChannel= userId =>{
          </Menu.Item>
                 {/* users to send MESSAGES */}
                 {users.map((user) => (
-                    <Menu.Item active={user.uid===activeChannel} key={user.uid} onClick={() => this.changeChannel(user)} style={{ opacity: 0.7, fontStyle: 'italic' }}>
+                    <Menu.Item active={user.uid === activeChannel} key={user.uid} onClick={() => this.changeChannel(user)} style={{ opacity: 0.7, fontStyle: 'italic' }}>
                         <Icon name='circle' color={this.isUserOnline(user) ? 'green' : 'red'} />
                         @ {user.name}
                     </Menu.Item>

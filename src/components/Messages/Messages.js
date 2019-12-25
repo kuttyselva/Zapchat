@@ -7,6 +7,7 @@ import Message from './Message'
 import { connect } from 'react-redux'
 import { setUserPosts } from '../../actions'
 import Typing from './Typing'
+import Skeleton from './Skeleton'
 class Messages extends Component {
   state = {
     isPrivateChannel: this.props.isPrivateChannel,
@@ -25,19 +26,53 @@ class Messages extends Component {
     numUniqueUser: '',
     searchTerm: '',
     searchLoading: false,
-    searchResults: []
+    searchResults: [],
+    listeners: []
   }
   componentDidMount() {
-    const { channel, user } = this.state;
+    const { channel, user, listeners } = this.state;
     if (channel && user) {
       this.addListener(channel.id);
+      this.removeListeners(listeners)
       this.addUsersStarListener(channel.id, user.uid);
     }
+  }
+
+  addToListeners = (id, ref, event) => {
+    const index = this.state.listeners.findIndex(listener => {
+      return listener.id === id && listener.ref === ref && listener.event === event;
+    })
+    if (index === -1) {
+      const newListener = { id, ref, event };
+      this.setState({ listeners: this.state.listeners.concat(newListener) });
+    }
+  }
+
+  componentWillUnmount() {
+    this.removeListeners(this.state.listeners);
+    this.state.connectedRef.off();
   }
   addListener = (channelId) => {
     this.addMessageListener(channelId);
     this.addTypingListener(channelId);
   }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (this.messagesEnd) {
+      this.scrollToBottom();
+    }
+  }
+
+  removeListeners = listeners => {
+    listeners.forEach(listener => {
+      listener.ref.child(listener.id).off(listener.event);
+    });
+  }
+
+  scrollToBottom = () => {
+    this.messagesEnd.scrollIntoView({ behavior: 'smooth' });
+  }
+
   addTypingListener = channelId => {
     let typingUsers = [];
     this.state.typingRef.child(channelId).on('child_added', snap => {
@@ -49,6 +84,8 @@ class Messages extends Component {
         this.setState({ typingUsers });
       }
     });
+
+    this.addToListeners(channelId, this.state.typingRef, 'child_removed');
 
     this.state.typingRef.child(channelId).on('child_removed', snap => {
       const index = typingUsers.findIndex(user => user.id === snap.key);
@@ -94,6 +131,8 @@ class Messages extends Component {
       this.countUniqueUsers(LoadedMessages);
       this.countUserPosts(LoadedMessages);
     })
+
+    this.addToListeners(channelId, ref, 'child_added');
   };
 
   handleStar = () => {
@@ -207,19 +246,30 @@ class Messages extends Component {
       </div>
     )
     )
-  )
+  );
+
+  displayMessageSkeleton = loading => (
+    loading ? (
+      <React.Fragment>
+        {[...Array(10)].map((_, i) => (
+          <Skeleton key={i} />
+        ))}
+      </React.Fragment>
+    ) : null)
+
 
   render() {
-    const { messageRef, messages, channel, user, progressbar, numUniqueUser, searchTerm, searchResults, searchLoading, isPrivateChannel, isChannelstarred, typingUsers } = this.state;
+    const { messageRef, messages, channel, user, progressbar, numUniqueUser, searchTerm, messagesLoading, searchResults, searchLoading, isPrivateChannel, isChannelstarred, typingUsers } = this.state;
     return (
       <React.Fragment>
         <MessagesHeader handleStar={this.handleStar} isChannelstarred={isChannelstarred} isPrivateChannel={isPrivateChannel} searchLoading={searchLoading} handleSearchChange={this.handleSearchChange} channelName={this.displayChannelName(channel)} users={numUniqueUser} />
         <Segment>
           <Comment.Group className={progressbar ? 'messages__progress' : ' messages'}>
             {/* messages */}
-
+            {this.displayMessageSkeleton(messagesLoading)}
             {searchTerm ? this.displayMessages(searchResults) : this.displayMessages(messages)}
             {this.displayTypingUsers(typingUsers)}
+            <div ref={node => (this.messagesEnd = node)}></div>
           </Comment.Group>
         </Segment>
         <MessageForm getMessagesRef={this.getMessagesRef} isPrivateChannel={isPrivateChannel} messageRef={messageRef} currentUser={user} currentChannel={channel} isProgressBarVisible={this.isProgressBarVisible} />
