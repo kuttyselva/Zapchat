@@ -5,7 +5,9 @@ import FileModal from './FileModal'
 import uuidv4 from 'uuid/v4'
 import ProgressBar from './ProgressBar'
 import { Picker, emojiIndex } from 'emoji-mart';
-import 'emoji-mart/css/emoji-mart.css'
+import 'emoji-mart/css/emoji-mart.css';
+import aesjs from 'aes-js';
+import axios from 'axios'
 export default class MessageForm extends Component {
     state = {
         message: '',
@@ -32,7 +34,7 @@ export default class MessageForm extends Component {
     componentWillUnmount() {
         if (this.state.uploadTask != null) {
             this.state.uploadTask.cancel();
-            this.setState({uploadTask:null});
+            this.setState({ uploadTask: null });
         }
     }
 
@@ -89,44 +91,96 @@ export default class MessageForm extends Component {
             return 'chat/public';
         }
     }
-    uploadFile = (file, metadata) => {
+
+    b64toBlob = (b64Data, contentType = '', sliceSize = 1024) => {
+        const byteCharacters = atob(b64Data);
+        const byteArrays = [];
+
+        for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+            const slice = byteCharacters.slice(offset, offset + sliceSize);
+
+            const byteNumbers = new Array(slice.length);
+            for (let i = 0; i < slice.length; i++) {
+                byteNumbers[i] = slice.charCodeAt(i);
+            }
+
+            const byteArray = new Uint8Array(byteNumbers);
+            byteArrays.push(byteArray);
+        }
+
+        const blob = new Blob(byteArrays, { type: contentType });
+        return blob;
+    }
+
+    encryption = (text) => {
+        var key = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+        var textBytes = aesjs.utils.utf8.toBytes(text);
+        var aesCtr = new aesjs.ModeOfOperation.ctr(key, new aesjs.Counter(5));
+        var encryptedBytes = aesCtr.encrypt(textBytes);
+        var encryptedHex = aesjs.utils.hex.fromBytes(encryptedBytes);
+        console.log(encryptedHex);
+        return encryptedHex;
+    }
+    decryption = (encryptedHex) => {
+        var key = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+        var aesCtr = new aesjs.ModeOfOperation.ctr(key, new aesjs.Counter(5));
+        var encryptedBytes = aesjs.utils.hex.toBytes(encryptedHex);
+        var decryptedBytes = aesCtr.decrypt(encryptedBytes);
+        var decryptedText = aesjs.utils.utf8.fromBytes(decryptedBytes);
+        console.log(decryptedText);
+        return decryptedText;
+    }
+
+    uploadFile = (file, metadata, passcode) => {
         const pathToUpload = this.state.channel.id;
         const ref = this.props.getMessagesRef();
-        const filePath = `${this.getPath()}/${uuidv4()}.jpg`;
-        this.setState({
-            uploadState: 'uploading',
-            uploadTask: this.state.storageRef.child(filePath).put(file, metadata)
-        },
-            () => {
-                this.state.uploadTask.on('state_changed', snap => {
-                    const percentUpload = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
-                    this.props.isProgressBarVisible(percentUpload);
-                    this.setState({ percentUpload });
-                },
-                    err => {
-                        console.log(err);
-                        this.setState({
-                            errors: this.state.errors.concat(err),
-                            uploadState: "error",
-                            uploadTask: null
-                        })
-                    }, () => {
-                        this.state.uploadTask.snapshot.ref.getDownloadURL().then(downloadUrl => {
-                            this.sendFileMessage(downloadUrl, ref, pathToUpload);
-                        })
-                            .catch(
-                                err => {
-                                    console.log(err);
-                                    this.setState({
-                                        errors: this.state.errors.concat(err),
-                                        uploadState: "error",
-                                        uploadTask: null
+        let imageData;
+        const encrypted = this.encryption(passcode);
+        const decrypted = this.decryption(encrypted);
+        console.log(encrypted, decrypted);
+        const data = new FormData()
+        data.append('image', file);
+        data.append('passcode', encrypted);
+        axios.post('http://localhost:5000/api/decrypt', data).then((data) => {
+            console.log(data.data.status);
+            imageData = this.b64toBlob(data.data.status, 'image/jpg');
+            const filePath = `${this.getPath()}/${uuidv4()}.jpg`;
+            this.setState({
+                uploadState: 'uploading',
+                uploadTask: this.state.storageRef.child(filePath).put(imageData, metadata)
+            },
+                () => {
+                    this.state.uploadTask.on('state_changed', snap => {
+                        const percentUpload = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+                        this.props.isProgressBarVisible(percentUpload);
+                        this.setState({ percentUpload });
+                    },
+                        err => {
+                            console.log(err);
+                            this.setState({
+                                errors: this.state.errors.concat(err),
+                                uploadState: "error",
+                                uploadTask: null
+                            })
+                        }, () => {
+                            this.state.uploadTask.snapshot.ref.getDownloadURL().then(downloadUrl => {
+                                this.sendFileMessage(downloadUrl, ref, pathToUpload);
+                            })
+                                .catch(
+                                    err => {
+                                        console.log(err);
+                                        this.setState({
+                                            errors: this.state.errors.concat(err),
+                                            uploadState: "error",
+                                            uploadTask: null
+                                        })
                                     })
-                                })
-                    }
-                )
-            }
-        )
+                        }
+                    )
+                }
+            )
+        })
+
     };
 
     handleKeyDown = (event) => {

@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "aes-js": "^3.1.2",
+    "aes256": "^1.0.4",
+    "axios": "^0.19.2",
     "emoji-mart": "^2.11.1",
     "firebase": "^6.6.2",
     "md5": "^2.2.1",
@@ -16,6 +19,7 @@
     "react-redux": "^7.1.1",
     "react-router-dom": "^5.1.0",
     "react-scripts": "3.1.2",
+    "react-simple-image-viewer": "0.0.3",
     "redux": "^4.0.4",
     "redux-devtools-extension": "^2.13.8",
     "semantic-ui-css": "^2.4.1",
